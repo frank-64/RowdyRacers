@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public static class Math
+public static class MathHelpers
 {
     //Have we passed a waypoint?
     //From http://www.habrador.com/tutorials/linear-algebra/2-passed-waypoint/

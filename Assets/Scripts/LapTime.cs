@@ -1,3 +1,4 @@
+using Assets.Scripts;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,14 +29,15 @@ public class LapTimeObject
     }
 }
 
-public class CarInfo
+public class LapInfo
 {
-    public int lap = 0;
+    public int lap = 1;
     public DateTime startTime;
     public DateTime finishTime;
+    public TimeSpan raceTimeSpan;
     private List<LapTimeObject> lapTimes;
 
-    public CarInfo()
+    public LapInfo()
     {
         lapTimes = new List<LapTimeObject>();
     }
@@ -52,104 +54,107 @@ public class CarInfo
 
 public class LapTime : MonoBehaviour
 {
-    // TODO: Laps will need to be a global variable (eventually) and will be very important in the state of the game
-    [SerializeField] private int laps;
+    public RampRacersGame rampRacersGame;
+    public bool hasCompletedRace = false;
+    private bool crossedStartLine = false;
+
     [SerializeField] private GameObject car;
     [SerializeField] private TextMeshPro lapTimeText;
-    [SerializeField] private TextMeshPro raceTimeText;
-    private CarInfo carInfo;
+
+    private LapInfo lapInfo;
     private string previousLapTimesText = "";
-    public bool isAI;
-    private Stopwatch s;
-    private Stopwatch raceStopwatch;
+    private Stopwatch carStopwatch;
 
     // Start is called before the first frame update
-    void Start()
+    public void Start()
     {
-        carInfo = new CarInfo();
-        s = new Stopwatch();
-        raceStopwatch = new Stopwatch();
-        raceStopwatch.Start();
+        lapInfo = new LapInfo();
+        carStopwatch = new Stopwatch();
     }
 
     // Update is called once per frame
     void Update()
     {
-        raceTimeText.text = raceStopwatch.Elapsed.StripMilliseconds().ToString();
-        if (carInfo.lap != 0 && !isAI)
-        {
-            lapTimeText.text = previousLapTimesText;
-            lapTimeText.text = lapTimeText.text + "Lap " + carInfo.lap + ": " + s.Elapsed.StripMilliseconds();
-            
-        }
-        if (carInfo.lap == -1)
-        {
-            // Car finished race
-            lapTimeText.text = previousLapTimesText;
-        }
+        //if (car.CompareTag("PlayerCar"))
+        //{
+        //    Debug.Log(carStopwatch.Elapsed.ToString());
+        //}
+    }
+
+    public void StartStopwatch()
+    {
+        carStopwatch.Start();
+        lapInfo.startTime = DateTime.Now;
+        Debug.Log("The car " + car.tag + " has started lap " + lapInfo.lap);
     }
 
     private void OnTriggerEnter(Collider collisionObject)
     {
-        if (isAI )//&& completeLap)
+        if (hasCompletedRace) // Return as fast as possible and do nothing if race completed
         {
+            return;
+        }
+
+        if (!crossedStartLine) // Don't do anything before car crosses start line
+        {
+            crossedStartLine = true;
+            return;
+        }
+
+        else if(collisionObject.gameObject.CompareTag("Finish") && true) // TODO: Determine car has passed all waypoints before crossing the finish line
+        {
+            carStopwatch.Stop();
+            TimeSpan lapTime = carStopwatch.Elapsed;
+
+            if (lapInfo.lap == rampRacersGame.laps) //  -- RACE COMPLETE -- 
+            {
+                Debug.Log("Race completed!");
+                hasCompletedRace = true;
+                rampRacersGame.RaceCompleted(car);
+
+                DateTime finishTime = DateTime.Now;
+                lapInfo.finishTime = finishTime;
+                lapInfo.raceTimeSpan = finishTime.Subtract(lapInfo.startTime);
+
+                Debug.Log("The car " + car.tag + " crossed the finish line in time: " + lapInfo.raceTimeSpan + " with the lap taking: " +
+                          lapTime.StripMilliseconds());
+            }
+            else
+            {
+                // Only reset and start stopwatch if race is not complete
+                carStopwatch.Reset();
+                carStopwatch.Start();
+            }
+
+            // Update laptime and finialise finish
+            RecordLapTime(lapTime);
+            SetLapTimesList();
             lapTimeText.text = previousLapTimesText;
-            lapTimeText.text = lapTimeText.text + "Lap " + carInfo.lap + ": " + s.Elapsed.StripMilliseconds();
-        }
-        
-        // TODO: Determine car has passed all waypoints before FINISHING
-        if (collisionObject.gameObject.CompareTag("Finish"))
-        {
-            ToggleStopWatch();
         }
     }
+    
 
-    public void ToggleStopWatch()
+    public void RecordLapTime(TimeSpan lapTime)
     {
-        s.Start();
-        if (carInfo.lap == 0)
+        lapInfo.SetLapTime(new LapTimeObject(lapTime, lapInfo.lap));
+        if (lapInfo.lap < rampRacersGame.laps)
         {
-            carInfo.startTime = DateTime.Now;
-            // TODO: Determine if lap should be increased based on waypoints passed
-            carInfo.lap++;
-            Debug.Log("The car " + car.tag + " has started lap " + carInfo.lap);
-        }
-        else if (carInfo.lap < laps)
-        {
-            s.Stop();
-            TimeSpan lapTime = s.Elapsed;
-            carInfo.SetLapTime(new LapTimeObject(lapTime, carInfo.lap));
-            SetPreviousLapTimes();
-            s.Reset();
-            s.Start();
-            carInfo.lap++;
-            Debug.Log("The car " + car.tag + " has started lap " + carInfo.lap + ". The previous lap took " +
-                      lapTime.StripMilliseconds());
-        }
-        else if (carInfo.lap == laps)
-        {
-            DateTime finishTime = DateTime.Now;
-            s.Stop();
-            TimeSpan lapTime = s.Elapsed;
-            carInfo.SetLapTime(new LapTimeObject(lapTime, carInfo.lap));
-            // Indicate race has finished
-            carInfo.lap = -1;
-            SetPreviousLapTimes();
-            carInfo.finishTime = finishTime;
-            TimeSpan t = finishTime.Subtract(carInfo.startTime);
-            Debug.Log("The car " + car.tag + " crossed the finish line in time: " + t + " with the lap taking: " +
-                      lapTime.StripMilliseconds());
+            Debug.Log("The car " + car.tag + " has started lap " + lapInfo.lap + ". The previous lap took " +
+            lapTime.StripMilliseconds());
+
+            lapInfo.lap++;
         }
     }
 
-    public void SetPreviousLapTimes()
+    public void SetLapTimesList()
     {
         string lapTimesText = "";
-        foreach (LapTimeObject lapTimeObject in carInfo.GetLapTimes())
+        foreach (LapTimeObject lapTimeObject in lapInfo.GetLapTimes())
         {
-            lapTimesText = lapTimesText + "Lap " + lapTimeObject.lap + ": " + lapTimeObject.time.StripMilliseconds()+"\n";
+            lapTimesText = lapTimesText + "Lap " + lapTimeObject.lap + ": " + lapTimeObject.time.StripMilliseconds() + "\n";
         }
 
         previousLapTimesText = lapTimesText;
+        return;
     }
 }

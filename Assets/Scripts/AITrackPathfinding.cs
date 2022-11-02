@@ -65,7 +65,7 @@ public class AITrackPathfinding : MonoBehaviour
     {
         float motor = maxMotorTorque;
         
-        float steeringAngle = maxSteerAngle * Math.SteerDirection(transform, steerPosition, targetWaypoint);
+        float steeringAngle = maxSteerAngle * MathHelpers.SteerDirection(transform, steerPosition, targetWaypoint);
 
         //Average the steering angles to simulate the time it takes to turn the steering wheel
         float averageAmount = 30f;

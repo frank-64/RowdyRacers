@@ -17,8 +17,6 @@ public class CarLocomotion : MonoBehaviour
     public List<AxleInfo> axleInfos; 
     public float maxMotorTorque;
     public float maxSteeringAngle;
-    public TextMeshPro countdown;
-    public int countdownNum = 4;
 
     // public void ApplyLocalPositionToVisuals(WheelCollider collider)
     // {
