@@ -59,11 +59,11 @@ namespace UnityStandardAssets.Vehicles.Car
         // Use this for initialization
         private void Start()
         {
-            m_WheelMeshLocalRotations = new Quaternion[4];
-            for (int i = 0; i < 4; i++)
-            {
-                m_WheelMeshLocalRotations[i] = m_WheelMeshes[i].transform.localRotation;
-            }
+            //m_WheelMeshLocalRotations = new Quaternion[4];
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    m_WheelMeshLocalRotations[i] = m_WheelMeshes[i].transform.localRotation;
+            //}
             m_WheelColliders[0].attachedRigidbody.centerOfMass = m_CentreOfMassOffset;
 
             m_MaxHandbrakeTorque = float.MaxValue;
@@ -129,14 +129,14 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public void Move(float steering, float accel, float footbrake, float handbrake)
         {
-            for (int i = 0; i < 4; i++)
-            {
-                Quaternion quat;
-                Vector3 position;
-                m_WheelColliders[i].GetWorldPose(out position, out quat);
-                m_WheelMeshes[i].transform.position = position;
-                m_WheelMeshes[i].transform.rotation = quat;
-            }
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    Quaternion quat;
+            //    Vector3 position;
+            //    m_WheelColliders[i].GetWorldPose(out position, out quat);
+            //    m_WheelMeshes[i].transform.position = position;
+            //    m_WheelMeshes[i].transform.rotation = quat;
+            //}
 
             //clamp input values
             steering = Mathf.Clamp(steering, -1, 1);
@@ -272,33 +272,33 @@ namespace UnityStandardAssets.Vehicles.Car
         private void CheckForWheelSpin()
         {
             // loop through all wheels
-            for (int i = 0; i < 4; i++)
-            {
-                WheelHit wheelHit;
-                m_WheelColliders[i].GetGroundHit(out wheelHit);
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    WheelHit wheelHit;
+            //    m_WheelColliders[i].GetGroundHit(out wheelHit);
 
-                // is the tire slipping above the given threshhold
-                if (Mathf.Abs(wheelHit.forwardSlip) >= m_SlipLimit || Mathf.Abs(wheelHit.sidewaysSlip) >= m_SlipLimit)
-                {
-                    m_WheelEffects[i].EmitTyreSmoke();
+            //    // is the tire slipping above the given threshhold
+            //    //if (Mathf.Abs(wheelHit.forwardSlip) >= m_SlipLimit || Mathf.Abs(wheelHit.sidewaysSlip) >= m_SlipLimit)
+            //    //{
+            //    //    m_WheelEffects[i].EmitTyreSmoke();
 
-                    // avoiding all four tires screeching at the same time
-                    // if they do it can lead to some strange audio artefacts
-                    if (!AnySkidSoundPlaying())
-                    {
-                        m_WheelEffects[i].PlayAudio();
-                    }
-                    continue;
-                }
+            //    //    // avoiding all four tires screeching at the same time
+            //    //    // if they do it can lead to some strange audio artefacts
+            //    //    if (!AnySkidSoundPlaying())
+            //    //    {
+            //    //        m_WheelEffects[i].PlayAudio();
+            //    //    }
+            //    //    continue;
+            //    //}
 
-                // if it wasnt slipping stop all the audio
-                if (m_WheelEffects[i].PlayingAudio)
-                {
-                    m_WheelEffects[i].StopAudio();
-                }
-                // end the trail generation
-                m_WheelEffects[i].EndSkidTrail();
-            }
+            //    // if it wasnt slipping stop all the audio
+            //    if (m_WheelEffects[i].PlayingAudio)
+            //    {
+            //        m_WheelEffects[i].StopAudio();
+            //    }
+            //    // end the trail generation
+            //    m_WheelEffects[i].EndSkidTrail();
+            //}
         }
 
         // crude traction control that reduces the power to wheel if the car is wheel spinning too much

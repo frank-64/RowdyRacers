@@ -9,7 +9,7 @@ namespace Assets.Scripts
     public class RampRacersGame : MonoBehaviour
     {
         public bool hasRaceCommenced = false;
-        private bool hasRaceCompleted = true;
+        private bool hasRaceCompleted = false;
         public int laps = 3;
 
         private Stopwatch raceStopwatch;
@@ -18,13 +18,16 @@ namespace Assets.Scripts
         public TextMeshPro countdownText;
         public TextMeshPro raceStopwatchText;
         public TextMeshPro finishedRaceText;
+        public GameObject RaceInitiatedUIObject;
+        public GameObject StartRaceUIObject;
+
 
         // get car LapTimes involved in race
         [SerializeField] private LapTime playerLapTime;
         [SerializeField] private LapTime AILapTime;
 
         // get car locomotion
-        [SerializeField] private CarLocomotion playerCarLocomotion;
+        [SerializeField] private PlayerCarControl playerCarControl;
         [SerializeField] private AITrackPathfinding AIPathfinding;
 
 
@@ -38,6 +41,7 @@ namespace Assets.Scripts
         // Update is called once per frame
         void Update()
         {
+            // Get user to hit the space bar before it can continue with the race starting to determine that the user is active
             if (Input.GetKeyDown(KeyCode.Space)) { 
                 if (!hasRaceCommenced)
                 {
@@ -54,35 +58,39 @@ namespace Assets.Scripts
 
         IEnumerator Countdown()
         {
-            for (int i = 4; i > 1; i--)
+            for (int i = 4; i > 0; i--)
             {
                 yield return new WaitForSeconds(1);
                 countdownText.text = i.ToString();
             }
             yield return new WaitForSeconds(1);
             countdownText.text = "GO!";
+            CountdownFinished();
+            yield return new WaitForSeconds(1);
+            countdownText.text = "";
         }
 
         void StartGame()
         {
-            // Get user to hit the space bar before it can continue with the race starting to determine that the user is active
-
             //Initiate countdown - cars can't move until countdown over
-
-            // Do countdown
-            //
-            //
             countdownText.gameObject.SetActive(true);
+            StartRaceUIObject.SetActive(false);
             StartCoroutine(Countdown());
+        }
 
+        void CountdownFinished()
+        {
             // Starting all the stopwatches
             raceStopwatch.Start();
             playerLapTime.StartStopwatch();
             AILapTime.StartStopwatch();
 
+            // Display lap times and stop watches
+            RaceInitiatedUIObject.SetActive(true);
+
             // Cars can now move
-            playerCarLocomotion.axleInfos[0].motor = true;
-            AIPathfinding.axleInfos[0].motor = true;
+            playerCarControl.driving = true;
+            AIPathfinding.driving = true;
         }
 
         public void RaceCompleted(GameObject car)
