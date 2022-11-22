@@ -8,9 +8,8 @@ namespace Assets.Scripts
 {
     public class RampRacersGame : MonoBehaviour
     {
-        public bool hasRaceCommenced = false;
-        private bool hasRaceCompleted = false;
-        public int laps = 3;
+        [HideInInspector] public bool hasRaceCommenced = false;
+        private bool hasCarFinishedRace = false;
 
         private Stopwatch raceStopwatch;
 
@@ -18,12 +17,13 @@ namespace Assets.Scripts
         public TextMeshPro countdownText;
         public TextMeshPro raceStopwatchText;
         public TextMeshPro finishedRaceText;
+        public TextMeshPro totalPenaltyText;
         public GameObject RaceInitiatedUIObject;
         public GameObject StartRaceUIObject;
 
 
         // get car LapTimes involved in race
-        [SerializeField] private LapTime playerLapTime;
+        public LapTime playerLapTime;
         [SerializeField] private LapTime AILapTime;
 
         // get car locomotion
@@ -67,7 +67,7 @@ namespace Assets.Scripts
             countdownText.text = "GO!";
             CountdownFinished();
             yield return new WaitForSeconds(1);
-            countdownText.text = "";
+            countdownText.gameObject.SetActive(false);
         }
 
         void StartGame()
@@ -88,6 +88,10 @@ namespace Assets.Scripts
             // Display lap times and stop watches
             RaceInitiatedUIObject.SetActive(true);
 
+            // Testing logs
+            UnityEngine.Debug.Log($"Race laps: {RaceSettings.Laps}");
+            UnityEngine.Debug.Log($"Race difficulty: {RaceSettings.RaceDifficulty}");
+
             // Cars can now move
             playerCarControl.driving = true;
             AIPathfinding.driving = true;
@@ -95,15 +99,26 @@ namespace Assets.Scripts
 
         public void RaceCompleted(GameObject car)
         {
-            hasRaceCompleted = true;
-            raceStopwatch.Stop();
-            raceStopwatchText.color = Color.green;
-            finishedRaceText.gameObject.SetActive(true);
-
             // Wait 5 seconds but capture boolean values of completed cars
             // determine if object 'car' is winner
             // set text color green and change text to 'Winner!'
+            hasCarFinishedRace = true;
+            if (car.name == "PlayerCar")
+            {
+                FinishedRaceUI();
+            }
+        }
 
+        public void FinishedRaceUI()
+        {
+            raceStopwatch.Stop();
+            raceStopwatchText.color = Color.green;
+            finishedRaceText.gameObject.SetActive(true);
+            if (playerLapTime.totalPenaltySeconds > 0)
+            {
+                totalPenaltyText.gameObject.SetActive(true);
+                totalPenaltyText.text = $"Total penalties: +{Math.Round(playerLapTime.totalPenaltySeconds)}s";
+            }
         }
     }
 }

@@ -55,37 +55,65 @@ public class LapInfo
 public class LapTime : MonoBehaviour
 {
     public RampRacersGame rampRacersGame;
-    public bool hasCompletedRace = false;
-    private bool crossedStartLine = false;
 
     [SerializeField] private GameObject car;
     [SerializeField] private TextMeshPro lapTimeText;
+    [SerializeField] private TextMeshPro penaltyText;
+    [SerializeField] private TextMeshPro raceTimeSpanText;
 
+    private bool crossedStartLine = false;
     private LapInfo lapInfo;
     private string previousLapTimesText = "";
     private Stopwatch carStopwatch;
+    private int totalLaps = 1;
+
+    [HideInInspector] public bool hasCompletedRace = false;
+    [HideInInspector] public double totalPenaltySeconds = 0;
 
     // Start is called before the first frame update
     public void Start()
     {
         lapInfo = new LapInfo();
         carStopwatch = new Stopwatch();
-    }
+        totalLaps = RaceSettings.Laps;
 
-    // Update is called once per frame
-    void Update()
-    {
-        //if (car.CompareTag("PlayerCar"))
-        //{
-        //    Debug.Log(carStopwatch.Elapsed.ToString());
-        //}
     }
 
     public void StartStopwatch()
     {
         carStopwatch.Start();
         lapInfo.startTime = DateTime.Now;
-        Debug.Log("The car " + car.tag + " has started lap " + lapInfo.lap);
+    }
+
+    public void CalculatePenalty(TimeSpan timeSpanOffTrack)
+    {
+        if (hasCompletedRace)
+        {
+            return;
+        }
+        var seconds = timeSpanOffTrack.TotalSeconds;
+        switch (RaceSettings.RaceDifficulty)
+        {
+            case RaceDifficulty.Easy: AddPenalty(Math.Clamp(Math.Round(seconds), 1, 10)); break; // Min 1 second penalty
+            case RaceDifficulty.Medium: AddPenalty(Math.Clamp(Math.Round(seconds) * 2, 2, 10)); break; // Min 2 second penalty and penalty * 2 time off track
+            case RaceDifficulty.Hard: AddPenalty(Math.Clamp(Math.Round(seconds) * 2.5, 3, 10)); break; // Min 3 second penalty and penalty * 2.5 time off track
+            default:
+                break;
+        }
+    }
+
+    public void AddPenalty(double penalty)
+    {
+        totalPenaltySeconds += penalty;
+        StartCoroutine(DisplayPenalty(penalty.ToString()));
+    }
+
+    IEnumerator DisplayPenalty(string penalty)
+    {
+        penaltyText.text = $"You received a {penalty}s penalty\nStay on the track!";
+        penaltyText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(3);
+        penaltyText.gameObject.SetActive(false);
     }
 
     private void OnTriggerEnter(Collider collisionObject)
@@ -95,18 +123,18 @@ public class LapTime : MonoBehaviour
             return;
         }
 
-        if (!crossedStartLine) // Don't do anything before car crosses start line
+        if(collisionObject.gameObject.CompareTag("Finish") && true) // TODO: Determine car has passed all waypoints before crossing the finish line
         {
-            crossedStartLine = true;
-            return;
-        }
+            if (!crossedStartLine) // Don't do anything before car crosses start line
+            {
+                crossedStartLine = true;
+                return;
+            }
 
-        else if(collisionObject.gameObject.CompareTag("Finish") && true) // TODO: Determine car has passed all waypoints before crossing the finish line
-        {
             carStopwatch.Stop();
             TimeSpan lapTime = carStopwatch.Elapsed;
 
-            if (lapInfo.lap == rampRacersGame.laps) //  -- RACE COMPLETE -- 
+            if (lapInfo.lap == totalLaps) //  -- RACE COMPLETE -- 
             {
                 Debug.Log("Race completed!");
                 hasCompletedRace = true;
@@ -115,7 +143,9 @@ public class LapTime : MonoBehaviour
                 DateTime finishTime = DateTime.Now;
                 lapInfo.finishTime = finishTime;
                 lapInfo.raceTimeSpan = finishTime.Subtract(lapInfo.startTime);
+                AddPenaltiesToTimeSpan();
 
+                SetRaceTimeSpanText();
                 Debug.Log("The car " + car.tag + " crossed the finish line in time: " + lapInfo.raceTimeSpan + " with the lap taking: " +
                           lapTime.StripMilliseconds());
             }
@@ -137,11 +167,9 @@ public class LapTime : MonoBehaviour
     public void RecordLapTime(TimeSpan lapTime)
     {
         lapInfo.SetLapTime(new LapTimeObject(lapTime, lapInfo.lap));
-        if (lapInfo.lap < rampRacersGame.laps)
+        if (lapInfo.lap < totalLaps)
         {
-            Debug.Log("The car " + car.tag + " has started lap " + lapInfo.lap + ". The previous lap took " +
-            lapTime.StripMilliseconds());
-
+            lapTime.StripMilliseconds();
             lapInfo.lap++;
         }
     }
@@ -156,5 +184,17 @@ public class LapTime : MonoBehaviour
 
         previousLapTimesText = lapTimesText;
         return;
+    }
+
+    public void AddPenaltiesToTimeSpan() { 
+        lapInfo.raceTimeSpan += TimeSpan.FromSeconds(totalPenaltySeconds);
+    }
+
+    public void SetRaceTimeSpanText()
+    {
+        raceTimeSpanText.gameObject.SetActive(true);
+        string totalTime = $"Total race time: {lapInfo.raceTimeSpan.StripMilliseconds()}";
+        Debug.Log(totalTime);
+        raceTimeSpanText.text = totalTime;
     }
 }

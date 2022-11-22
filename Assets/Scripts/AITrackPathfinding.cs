@@ -14,11 +14,11 @@ public class AITrackPathfinding : MonoBehaviour
     [SerializeField] private CarLocomotion carLocomotion;
 
     [SerializeField][Range(0, 1)] private float m_CautiousSpeedFactor = 0.05f;               // percentage of max speed to use when being maximally cautious
-    [SerializeField][Range(0, 180)] private float m_CautiousMaxAngle = 50f;                  // angle of approaching corner to treat as warranting maximum caution
+    [SerializeField][Range(0, 180)] private float m_CautiousMaxAngle = 40f;                  // angle of approaching corner to treat as warranting maximum caution
     [SerializeField] private float m_CautiousMaxDistance = 100f;                              // distance at which distance-based cautiousness begins
     [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
     [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
-    [SerializeField] private float m_AccelSensitivity = 0.04f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
+    [SerializeField] private float m_AccelSensitivity = 1f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
     [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
     [SerializeField] private float m_LateralWanderDistance = 3f;                              // how far the car will wander laterally towards its target
     [SerializeField] private float m_LateralWanderSpeed = 0.1f;                               // how fast the lateral wandering will fluctuate
@@ -55,7 +55,7 @@ public class AITrackPathfinding : MonoBehaviour
         }
         else
         {
-            Debug.Log("AI car is heading towards waypoint: "+(waypointIndex+1));
+            //Debug.Log("AI car is heading towards waypoint: "+(waypointIndex+1));
 
             Vector3 fwd = transform.forward;
             if (rigidbody.velocity.magnitude > carLocomotion.maxSpeed * 0.1f)
@@ -111,12 +111,7 @@ public class AITrackPathfinding : MonoBehaviour
                                               : m_AccelSensitivity;
 
             // decide the actual amount of accel/brake input to achieve desired speed.
-            float accel = Mathf.Clamp((desiredSpeed - carLocomotion.currentVelocity) * accelBrakeSensitivity, -1, 1);
-
-            // add acceleration 'wander', which also prevents AI from seeming too uniform and robotic in their driving
-            // i.e. increasing the accel wander amount can introduce jostling and bumps between AI cars in a race
-            accel *= (1 - m_AccelWanderAmount) +
-                     (Mathf.PerlinNoise(Time.time * m_AccelWanderSpeed, m_RandomPerlin) * m_AccelWanderAmount);
+            float accel = Mathf.Clamp(desiredSpeed * accelBrakeSensitivity, -1, 1);
 
             // calculate the local-relative position of the target, to steer towards
             Vector3 localTarget = transform.InverseTransformPoint(targetWaypoint.position);
