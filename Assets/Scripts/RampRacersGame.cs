@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts
 {
@@ -18,36 +19,49 @@ namespace Assets.Scripts
         public TextMeshPro raceStopwatchText;
         public TextMeshPro finishedRaceText;
         public TextMeshPro totalPenaltyText;
+        public TextMeshPro raceDecisionText;
+        public TextMeshPro difficultyText;
+        public TextMeshPro lapsText;
+        public TextMeshPro restartRaceText;
+        public TextMeshPro mainMenuText;
         public GameObject RaceInitiatedUIObject;
         public GameObject StartRaceUIObject;
+        public GameObject FinishedRaceUIObject;
 
 
         // get car LapTimes involved in race
-        public LapTime playerLapTime;
+        [SerializeField] private LapTime playerLapTime;
         [SerializeField] private LapTime AILapTime;
 
-        // get car locomotion
         [SerializeField] private PlayerCarControl playerCarControl;
         [SerializeField] private AITrackPathfinding AIPathfinding;
-
 
         // Use this for initialization
         void Start()
         {
             //Initialise objects
             raceStopwatch = new Stopwatch();
+            difficultyText.text = $"Difficulty: {RaceSettings.RaceDifficulty}";
+            lapsText.text = $"Laps: {RaceSettings.Laps}";
         }
 
         // Update is called once per frame
         void Update()
         {
-            // Get user to hit the space bar before it can continue with the race starting to determine that the user is active
+            // Get user to hit the space bar before they can continue with the race
             if (Input.GetKeyDown(KeyCode.Space)) { 
                 if (!hasRaceCommenced)
                 {
                     hasRaceCommenced = true;
                     StartGame();
                 }
+            }else if (Input.GetKeyDown(KeyCode.Escape) && (FinishedRaceUIObject.activeInHierarchy || StartRaceUIObject.activeInHierarchy))
+            {
+                SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+            }
+            else if (Input.GetKeyDown(KeyCode.R)) // Restart race
+            {
+                SceneManager.LoadScene("RaceMode", LoadSceneMode.Single);
             }   
 
             if (raceStopwatch.IsRunning)
@@ -75,6 +89,8 @@ namespace Assets.Scripts
             //Initiate countdown - cars can't move until countdown over
             countdownText.gameObject.SetActive(true);
             StartRaceUIObject.SetActive(false);
+            restartRaceText.gameObject.SetActive(false);
+            mainMenuText.gameObject.SetActive(false);
             StartCoroutine(Countdown());
         }
 
@@ -99,25 +115,45 @@ namespace Assets.Scripts
 
         public void RaceCompleted(GameObject car)
         {
-            // Wait 5 seconds but capture boolean values of completed cars
-            // determine if object 'car' is winner
-            // set text color green and change text to 'Winner!'
-            hasCarFinishedRace = true;
             if (car.name == "PlayerCar")
             {
-                FinishedRaceUI();
+                if (hasCarFinishedRace) // AI car has already finished the race, hence player lost race
+                {
+                    FinishedRaceUI(!hasCarFinishedRace);
+                }
+                else
+                {
+                    FinishedRaceUI(hasCarFinishedRace);
+                }
+            }
+            else
+            {
+                hasCarFinishedRace = true;
             }
         }
 
-        public void FinishedRaceUI()
+        public void FinishedRaceUI(bool wonRace)
         {
             raceStopwatch.Stop();
             raceStopwatchText.color = Color.green;
-            finishedRaceText.gameObject.SetActive(true);
-            if (playerLapTime.totalPenaltySeconds > 0)
+            FinishedRaceUIObject.SetActive(true);
+            restartRaceText.gameObject.SetActive(true);
+            mainMenuText.gameObject.SetActive(true);
+            if (playerLapTime.totalPenaltySeconds > 0) // Display penalties obtained during race
             {
                 totalPenaltyText.gameObject.SetActive(true);
                 totalPenaltyText.text = $"Total penalties: +{Math.Round(playerLapTime.totalPenaltySeconds)}s";
+            }
+
+            if (wonRace) // Display race decision
+            {
+                totalPenaltyText.color = Color.green;
+                totalPenaltyText.text = "YOU WON!";
+            }
+            else
+            {
+                totalPenaltyText.text = "YOU LOST!";
+                totalPenaltyText.color = Color.red;
             }
         }
     }

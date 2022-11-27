@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityStandardAssets.Vehicles.Car;
 using static UnityStandardAssets.Vehicles.Car.CarAIControl;
 
@@ -30,45 +31,69 @@ public class AITrackPathfinding : MonoBehaviour
 
     private float m_RandomPerlin;             // A random value for the car to base its wander on (so that AI cars don't all wander in the same pattern)   // Reference to actual car controller we are controlling
 
-    private List<Transform> waypoints;
-    private Transform targetWaypoint;
-    private Transform previousWaypoint;
-    private int waypointIndex = 0;
-    public bool driving = false;
+    [SerializeField] private LapTime lapTime;
+    [HideInInspector] public bool driving = false;
+    private bool reversing = false;
 
+    private Vector3 previousPosition;
+    private float waitTime = 3.0f;
+    private float timer = 0.0f;
 
-    // Start is called before the first frame update
-    void Start()
+    IEnumerator CommenceReverse()
     {
-        waypoints = GameObject.FindGameObjectsWithTag("Waypoint").Select(waypoint => waypoint.transform).ToList();
-        targetWaypoint = waypoints[waypointIndex];
-        previousWaypoint = targetWaypoint;
+        // Drive backwards for 2 seconds then resume aiming for waypoints
+        carLocomotion.Drive(0,-1);
+        yield return new WaitForSeconds(1.75f);
+        reversing = false;
+        Debug.Log("AI car is free");
+    }
+
+    void Update()
+    {
+        if (driving)
+        {
+            timer += Time.deltaTime;
+
+            // Check if we have reached beyond 2 seconds.
+            // Subtracting two is more accurate over time than resetting to zero.
+            if (timer > waitTime)
+            {
+                if (Math.Round(previousPosition.x, 1) == Math.Round(rigidbody.position.x, 1))
+                {
+                    Debug.Log("AI Car is stuck");
+                    reversing = true;
+                    StartCoroutine(CommenceReverse());
+                }
+                previousPosition = rigidbody.position;
+                timer = timer - waitTime;
+            }
+        }
     }
 
     private void FixedUpdate()
     {
-        if (targetWaypoint == null || !driving)
+        if (lapTime.targetWaypoint == null || !driving)
         {
             // Car should not be moving,
             // use handbrake to stop
-            carLocomotion.Drive(0, 0, -1f);
+            carLocomotion.Drive(0, 0);
         }
-        else
+        else if (!reversing)
         {
             //Debug.Log("AI car is heading towards waypoint: "+(waypointIndex+1));
 
             Vector3 fwd = transform.forward;
-            if (rigidbody.velocity.magnitude > carLocomotion.maxSpeed * 0.1f)
+            if (rigidbody.velocity.magnitude > carLocomotion.topSpeed * 0.1f)
             {
                 fwd = rigidbody.velocity;
             }
 
-            float desiredSpeed = carLocomotion.maxSpeed;
+            float desiredSpeed = carLocomotion.topSpeed;
       
             // the car will brake according to the upcoming change in direction of the target. Useful for route-based AI, slowing for corners.
 
             // check out the angle of our target compared to the current direction of the car
-            float approachingCornerAngle = Vector3.Angle(targetWaypoint.forward, fwd);
+            float approachingCornerAngle = Vector3.Angle(lapTime.targetWaypoint.forward, fwd);
 
             // also consider the current amount we're turning, multiplied up and then compared in the same way as an upcoming corner angle
             float spinningAngle = rigidbody.angularVelocity.magnitude * m_CautiousAngularVelocityFactor;
@@ -77,7 +102,7 @@ public class AITrackPathfinding : MonoBehaviour
             float cautiousnessRequired = Mathf.InverseLerp(0, m_CautiousMaxAngle,
                                                             Mathf.Max(spinningAngle,
                                                                         approachingCornerAngle));
-            desiredSpeed = Mathf.Lerp(carLocomotion.maxSpeed, carLocomotion.maxSpeed * m_CautiousSpeedFactor,
+            desiredSpeed = Mathf.Lerp(carLocomotion.topSpeed, carLocomotion.topSpeed * m_CautiousSpeedFactor,
                                         cautiousnessRequired);
 
 
@@ -114,7 +139,7 @@ public class AITrackPathfinding : MonoBehaviour
             float accel = Mathf.Clamp(desiredSpeed * accelBrakeSensitivity, -1, 1);
 
             // calculate the local-relative position of the target, to steer towards
-            Vector3 localTarget = transform.InverseTransformPoint(targetWaypoint.position);
+            Vector3 localTarget = transform.InverseTransformPoint(lapTime.targetWaypoint.position);
 
             // work out the local angle towards the target
             float targetAngle = Mathf.Atan2(localTarget.x, localTarget.z) * Mathf.Rad2Deg;
@@ -123,19 +148,7 @@ public class AITrackPathfinding : MonoBehaviour
             float steer = Mathf.Clamp(targetAngle * m_SteerSensitivity, -1, 1) * Mathf.Sign(carLocomotion.currentVelocity);
 
             // feed input to the car controller.
-            carLocomotion.Drive(steer, accel, accel);
-
-            if (Vector3.Distance(rigidbody.position, targetWaypoint.position) < 3f)
-            {
-                waypointIndex += 1;
-
-                if (waypointIndex == waypoints.Count)
-                {
-                    waypointIndex = 0;
-                }
-
-                targetWaypoint = waypoints[waypointIndex];
-            }
+            carLocomotion.Drive(steer, accel);
         }
     }
 

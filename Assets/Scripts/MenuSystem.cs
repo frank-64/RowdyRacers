@@ -147,7 +147,7 @@ public class MenuSystem : MonoBehaviour
 
     void StartRaceMode()
     {
-        SceneManager.LoadScene("RampLevel1", LoadSceneMode.Single);
+        SceneManager.LoadScene("RaceMode", LoadSceneMode.Single);
     }
 
     void StartRampMode()

@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using TMPro;
 using Unity.VisualScripting;
@@ -56,16 +57,22 @@ public class LapTime : MonoBehaviour
 {
     public RampRacersGame rampRacersGame;
 
-    [SerializeField] private GameObject car;
+    [SerializeField] private Rigidbody rigidBody;
     [SerializeField] private TextMeshPro lapTimeText;
     [SerializeField] private TextMeshPro penaltyText;
     [SerializeField] private TextMeshPro raceTimeSpanText;
+    private string previousLapTimesText = "";
 
     private bool crossedStartLine = false;
     private LapInfo lapInfo;
-    private string previousLapTimesText = "";
     private Stopwatch carStopwatch;
     private int totalLaps = 1;
+
+    [HideInInspector] public List<Transform> waypoints;
+    [HideInInspector] public Transform targetWaypoint;
+    [HideInInspector] public int waypointIndex = 0;
+    private int waypointCount;
+    private bool waypointThresholdMet = false;
 
     [HideInInspector] public bool hasCompletedRace = false;
     [HideInInspector] public double totalPenaltySeconds = 0;
@@ -76,7 +83,22 @@ public class LapTime : MonoBehaviour
         lapInfo = new LapInfo();
         carStopwatch = new Stopwatch();
         totalLaps = RaceSettings.Laps;
+        waypoints = GameObject.FindGameObjectsWithTag("Waypoint").Select(waypoint => waypoint.transform).ToList();
+        targetWaypoint = waypoints[waypointIndex];
+        waypointCount = waypoints.Count();
 
+    }
+
+    public void Update()
+    {
+        if (Vector3.Distance(rigidBody.position, targetWaypoint.position) < 5f)
+        {
+            if (waypointIndex != waypointCount-1)
+            {
+                waypointIndex += 1;
+                targetWaypoint = waypoints[waypointIndex];
+            }
+        }
     }
 
     public void StartStopwatch()
@@ -123,7 +145,7 @@ public class LapTime : MonoBehaviour
             return;
         }
 
-        if(collisionObject.gameObject.CompareTag("Finish") && true) // TODO: Determine car has passed all waypoints before crossing the finish line
+        if(collisionObject.gameObject.CompareTag("Finish")) 
         {
             if (!crossedStartLine) // Don't do anything before car crosses start line
             {
@@ -134,32 +156,58 @@ public class LapTime : MonoBehaviour
             carStopwatch.Stop();
             TimeSpan lapTime = carStopwatch.Elapsed;
 
-            if (lapInfo.lap == totalLaps) //  -- RACE COMPLETE -- 
+            // Decide what percentage of waypoints must've been crossed to allow lap to count
+            switch (RaceSettings.RaceDifficulty)
             {
+                case RaceDifficulty.Easy: DetermineValidLap(Math.Round(waypointCount * 0.75f));
+                    break;
+                case RaceDifficulty.Medium: DetermineValidLap(Math.Round(waypointCount * 0.85f)); 
+                    break;
+                case RaceDifficulty.Hard: DetermineValidLap(Math.Round(waypointCount * 0.9f));
+                    break;
+                default:
+                    break;
+            }
+            waypointIndex = 0;
+            if (lapInfo.lap == totalLaps && waypointThresholdMet) //  -- RACE COMPLETE -- TODO: Car has passed all waypoints before crossing the finish line
+            {
+                waypointThresholdMet = false;
                 Debug.Log("Race completed!");
                 hasCompletedRace = true;
-                rampRacersGame.RaceCompleted(car);
+                rampRacersGame.RaceCompleted(rigidBody.gameObject);
 
                 DateTime finishTime = DateTime.Now;
                 lapInfo.finishTime = finishTime;
                 lapInfo.raceTimeSpan = finishTime.Subtract(lapInfo.startTime);
                 AddPenaltiesToTimeSpan();
 
-                SetRaceTimeSpanText();
-                Debug.Log("The car " + car.tag + " crossed the finish line in time: " + lapInfo.raceTimeSpan + " with the lap taking: " +
+                if (rigidBody.gameObject.tag == "PlayerCar")
+                {
+                    SetRaceTimeSpanText();
+                }
+                Debug.Log("The car " + rigidBody.gameObject.tag + " crossed the finish line in time: " + lapInfo.raceTimeSpan + " with the lap taking: " +
                           lapTime.StripMilliseconds());
+
+                RecordLapTime(lapTime);
+                SetLapTimesList();
+                lapTimeText.text = previousLapTimesText;
             }
-            else
+            else if (waypointThresholdMet)
             {
+                Debug.Log("Valid lap!");
                 // Only reset and start stopwatch if race is not complete
                 carStopwatch.Reset();
                 carStopwatch.Start();
-            }
 
-            // Update laptime and finialise finish
-            RecordLapTime(lapTime);
-            SetLapTimesList();
-            lapTimeText.text = previousLapTimesText;
+                RecordLapTime(lapTime);
+                SetLapTimesList();
+                lapTimeText.text = previousLapTimesText;
+            }
+            else
+            {
+                Debug.Log("You did not pass enough checkpoints!");
+                return;
+            }
         }
     }
     
@@ -196,5 +244,17 @@ public class LapTime : MonoBehaviour
         string totalTime = $"Total race time: {lapInfo.raceTimeSpan.StripMilliseconds()}";
         Debug.Log(totalTime);
         raceTimeSpanText.text = totalTime;
+    }
+
+    public void DetermineValidLap(double waypointThreshold)
+    {
+        if (waypointIndex >= waypointThreshold)
+        {
+            waypointThresholdMet = true;
+        }
+        else
+        {
+            waypointThresholdMet = false;
+        }
     }
 }
