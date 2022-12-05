@@ -4,12 +4,11 @@ using UnityEngine;
 
 public class CentreOfMass : MonoBehaviour
 {
-    [SerializeField] private Rigidbody rigidbody;
+    public Rigidbody body;
     // Start is called before the first frame update
     void Start()
     {
-
-        rigidbody.centerOfMass = transform.localPosition;
+        body.centerOfMass = transform.localPosition;
     }
 
     // Update is called once per frame

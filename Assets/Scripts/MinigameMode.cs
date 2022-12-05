@@ -5,66 +5,76 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class Bounce : MonoBehaviour
+public class MinigameMode : MonoBehaviour
 {
     [SerializeField] private GameObject menuUI;
     [SerializeField] private GameObject deathUI;
     [SerializeField] private GameObject wonUI;
-    [SerializeField] private TextMeshPro levelName;
-    [SerializeField] private Rigidbody bouncyBall;
-    [SerializeField] private float accelerationDueToGravityOnEarth = 9.81f; // Assuming the Dungeon is on Earth
-    [SerializeField] private float accelerationDueToGravityOnParctuis = 13.0f; // Fictional planet
+    [SerializeField] private Rigidbody ball;
+    [SerializeField] private TextMeshPro gravityText;
+    [SerializeField] private TextMeshPro deathText;
+    private float accelerationDueToGravityOnEarth = 9.81f; // Assuming the Dungeon is on Earth
+    private float accelerationDueToGravityOnCeres = 13.0f; // Not factual
     private Vector3 gravityVector;
+    private bool levelStarted = false;
+    private bool gameOver = false;
+
     public bool isSpaceMode = false;
     public bool isDungeonMode = true;
-    private bool levelStarted = false;
 
 
     // Start is called before the first frame update
     void Start()
     {
-        Time.timeScale = 1;
         levelStarted = false;
         menuUI.SetActive(true);
         deathUI.SetActive(false);
         wonUI.SetActive(false);
-        if (isDungeonMode)
-        {
-            levelName.text = "Level 1: Dungeon";
-        }
-        else
-        {
-            levelName.text = "Level 2: Space";
-        }
+        string gravityValue = isDungeonMode ? accelerationDueToGravityOnEarth.ToString() : accelerationDueToGravityOnCeres.ToString();
+        gravityText.text = $"g = -{gravityValue}m/s/s";
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && !levelStarted) // Level not started the user can exit to main menu
+        if (gameOver)
         {
-            SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
-        }
-        else if (Input.GetKeyDown(KeyCode.R)) // Restart level
-        {
-            if (isDungeonMode)
+            if (Input.GetKeyDown(KeyCode.Escape)) // Level not started the user can exit to main menu
             {
-                SceneManager.LoadScene("DungeonMode", LoadSceneMode.Single);
+                SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
             }
-            else
+        }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.Escape) && !levelStarted) // Level not started the user can exit to main menu
+            {
+                SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+            }
+            else if (Input.GetKeyDown(KeyCode.R)) // Restart level
+            {
+                if (isDungeonMode)
+                {
+                    SceneManager.LoadScene("DungeonMode", LoadSceneMode.Single);
+                }
+                else
+                {
+                    SceneManager.LoadScene("SpaceMode", LoadSceneMode.Single);
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.Space) && (isDungeonMode || isSpaceMode))
+            {
+                if (!levelStarted)
+                {
+                    levelStarted = true;
+                    StartLevel();
+                }
+                else
+                {
+                    ball.AddForce(0, 5, 0, ForceMode.Impulse);
+                }
+            }
+            else if (!levelStarted && !isDungeonMode && !isSpaceMode && Input.GetKeyDown(KeyCode.Return))
             {
                 SceneManager.LoadScene("SpaceMode", LoadSceneMode.Single);
-            }
-        }
-        else if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (!levelStarted)
-            {
-                levelStarted = true;
-                StartLevel();
-            }
-            else
-            {
-                bouncyBall.AddForce(0, 5, 0, ForceMode.Impulse);
             }
         }
     }
@@ -80,9 +90,9 @@ public class Bounce : MonoBehaviour
             }
             else
             {
-                gravityVector = GravityVector(accelerationDueToGravity: accelerationDueToGravityOnParctuis);
+                gravityVector = GravityVector(accelerationDueToGravity: accelerationDueToGravityOnCeres);
             }
-            bouncyBall.AddForce(gravityVector);
+            ball.AddForce(gravityVector);
         }
     }
 
@@ -92,33 +102,46 @@ public class Bounce : MonoBehaviour
         menuUI.SetActive(false);
         deathUI.SetActive(false);
         wonUI.SetActive(false);
-        bouncyBall.AddForce(Vector3.right * 3f, ForceMode.Impulse);
+        deathText.gameObject.SetActive(false);
+        ball.AddForce(Vector3.right * 3f, ForceMode.Impulse);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         Time.timeScale = 0;
         deathUI.SetActive(true);
+        deathText.gameObject.SetActive(true);
+        deathText.text = "You died!";
     }
 
     private void OnTriggerEnter(Collider collision)
     {
         if (isDungeonMode && collision.gameObject.CompareTag("Finish"))
         {
+            Time.timeScale = 0;
             levelStarted = false;
-            SceneManager.LoadScene("SpaceMode", LoadSceneMode.Single);
+            isDungeonMode = false;
+            wonUI.SetActive(true);
+
         }
         else if (isSpaceMode && collision.gameObject.CompareTag("Finish"))
         {
-            levelStarted = false;
+            gameOver = true;
+            wonUI.SetActive(true);
             Time.timeScale = 0;
+        }
+        else if (isSpaceMode && collision.gameObject.CompareTag("Ceiling"))
+        {
+            Time.timeScale = 0;
+            deathUI.SetActive(true);
+            deathText.gameObject.SetActive(true);
+            deathText.text = "You flew off into space!";
         }
     }
 
     public Vector3 GravityVector (float accelerationDueToGravity)
     {
         gravityVector = Vector3.down * accelerationDueToGravity;
-        Debug.Log(gravityVector);
         return gravityVector;
     }
 

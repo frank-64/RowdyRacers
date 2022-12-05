@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts
 {
@@ -28,21 +29,27 @@ namespace Assets.Scripts
         {
             if (wheels.Any())
             {
+                TimeSpan timeSpanOffTrack = allWheelsOffTrackStopwatch.Elapsed;
                 // Check if all four wheels have left the track
                 if (wheels[0].WheelColliderLeftTrack && wheels[1].WheelColliderLeftTrack && wheels[2].WheelColliderLeftTrack && wheels[3].WheelColliderLeftTrack)
                 {
-                    allWheelsOffTrackStopwatch.Start();
-                    // TODO: Do some more stuff here to indicate negative feedback loop
-                    // Red screen, bumpy camera etc
+                    if (!allWheelsOffTrackStopwatch.IsRunning)
+                    {
+                        allWheelsOffTrackStopwatch.Start();
+                    }
+                    else if (allWheelsOffTrackStopwatch.IsRunning && timeSpanOffTrack.TotalSeconds > 1)
+                    {
+                        lapTime.penaltyOverlay.SetActive(true); // Red screen negative feedback loop for leaving track
+                    }
                 }
                 else
                 {
                     if (allWheelsOffTrackStopwatch.IsRunning)
                     {
+                        lapTime.penaltyOverlay.SetActive(false);
                         allWheelsOffTrackStopwatch.Stop();
-                        TimeSpan timeSpanOffTrack = allWheelsOffTrackStopwatch.Elapsed;
+
                         allWheelsOffTrackStopwatch.Reset();
-                        //TODO: this penalty will depend on the difficulty of the race
                         if (timeSpanOffTrack.TotalSeconds > 1)
                         {
                             lapTime.CalculatePenalty(timeSpanOffTrack);
@@ -53,7 +60,6 @@ namespace Assets.Scripts
         }
 
         private void FixedUpdate()
-
         {
             if (driving)
             {
@@ -62,7 +68,6 @@ namespace Assets.Scripts
                 if (isRampMode)
                 {
                     carLocomotion.Drive(0, verticalInput);
-                    //carRigidBody.velocity = new Vector3(initalVelocity.x, carRigidBody.velocity.y, carRigidBody.velocity.z);
                 }
                 else
                 {

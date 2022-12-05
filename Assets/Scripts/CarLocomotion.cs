@@ -11,46 +11,20 @@ public class AxleInfo {
     public WheelCollider rightWheel;
 }
 
-//public class CarLocomotion : MonoBehaviour
-//{
-//    public List<AxleInfo> axleInfos; 
-//    public float maxMotorTorque;
-//    public float maxSteeringAngle;
-
-//    public void FixedUpdate()
-//    {
-//        float motor = maxMotorTorque * Input.GetAxis("Vertical");
-//        float steering = maxSteeringAngle * Input.GetAxis("Horizontal");
-     
-//        foreach (AxleInfo axleInfo in axleInfos) {
-//            if (axleInfo.steering) {
-//                axleInfo.leftWheel.steerAngle = steering;
-//                axleInfo.rightWheel.steerAngle = steering;
-//            }
-//            if (axleInfo.motor) {
-//                axleInfo.leftWheel.motorTorque = motor;
-//                axleInfo.rightWheel.motorTorque = motor;
-//            }
-//            // ApplyLocalPositionToVisuals(axleInfo.leftWheel);
-//            // ApplyLocalPositionToVisuals(axleInfo.rightWheel);
-//        }
-//    }
-//}
-
 public class CarLocomotion : MonoBehaviour
 {
     public List<AxleInfo> axleInfos;
     [SerializeField] private float maxMotorTorque;
     [SerializeField] private float maxSteeringAngle;
 
-    public float currentVelocity { get { return rigidbody.velocity.magnitude; } }
+    public float currentSpeed { get { return carRigidbody.velocity.magnitude; } }
     public float topSpeed = 12f;
 
-    private Rigidbody rigidbody;
+    private Rigidbody carRigidbody;
 
     public void Start()
     {
-        rigidbody = GetComponent<Rigidbody>();
+        carRigidbody = GetComponent<Rigidbody>();
     }
 
     public void Drive(float steer, float acceleration)
@@ -73,11 +47,11 @@ public class CarLocomotion : MonoBehaviour
 
     private void LimitSpeed()
     {
-        float speed = rigidbody.velocity.magnitude;
+        float speed = carRigidbody.velocity.magnitude;
 
         if (speed > topSpeed)
         {
-            rigidbody.velocity = topSpeed * rigidbody.velocity.normalized;
+            carRigidbody.velocity = topSpeed * carRigidbody.velocity.normalized;
         }
     }
 }

@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class MoveCamera : MonoBehaviour
 {
-    [SerializeField] private Rigidbody BouncyBall;
-    [SerializeField] private Camera camera;
+    [SerializeField] private Rigidbody ball;
+    [SerializeField] private Camera mainCamera;
     // Start is called before the first frame update
     void Start()
     {
@@ -15,6 +15,6 @@ public class MoveCamera : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.position = new Vector3(BouncyBall.position.x+2f, camera.transform.position.y,camera.transform.position.z);
+        transform.position = new Vector3(ball.position.x+2f, mainCamera.transform.position.y, mainCamera.transform.position.z);
     }
 }

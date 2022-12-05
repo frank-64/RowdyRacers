@@ -39,6 +39,7 @@ namespace Assets.Scripts
         // Use this for initialization
         void Start()
         {
+            Time.timeScale = 1;
             //Initialise objects
             raceStopwatch = new Stopwatch();
             difficultyText.text = $"Difficulty: {RaceSettings.RaceDifficulty}";
@@ -91,6 +92,7 @@ namespace Assets.Scripts
             StartRaceUIObject.SetActive(false);
             restartRaceText.gameObject.SetActive(false);
             mainMenuText.gameObject.SetActive(false);
+            totalPenaltyText.gameObject.SetActive(false);
             StartCoroutine(Countdown());
         }
 
@@ -117,22 +119,30 @@ namespace Assets.Scripts
         {
             if (car.name == "PlayerCar")
             {
-                if (hasCarFinishedRace) // AI car has already finished the race, hence player lost race
-                {
-                    FinishedRaceUI(!hasCarFinishedRace);
-                }
-                else
-                {
-                    FinishedRaceUI(hasCarFinishedRace);
-                }
+                FinishedRaceUI();
+                StartCoroutine(FinishLineCrossed(true));
             }
             else
             {
                 hasCarFinishedRace = true;
+                StartCoroutine(FinishLineCrossed(false));
+            }
+        }
+        
+        IEnumerator FinishLineCrossed(bool isPlayer)
+        {
+            yield return new WaitForSeconds(1f);
+            if (isPlayer)
+            {
+                playerCarControl.driving = false;
+            }
+            else
+            {
+                AIPathfinding.driving = false;
             }
         }
 
-        public void FinishedRaceUI(bool wonRace)
+        public void FinishedRaceUI()
         {
             raceStopwatch.Stop();
             raceStopwatchText.color = Color.green;
@@ -145,15 +155,15 @@ namespace Assets.Scripts
                 totalPenaltyText.text = $"Total penalties: +{Math.Round(playerLapTime.totalPenaltySeconds)}s";
             }
 
-            if (wonRace) // Display race decision
+            if (!hasCarFinishedRace) // Display race decision
             {
-                totalPenaltyText.color = Color.green;
-                totalPenaltyText.text = "YOU WON!";
+                raceDecisionText.color = Color.green;
+                raceDecisionText.text = "YOU WON!";
             }
             else
             {
-                totalPenaltyText.text = "YOU LOST!";
-                totalPenaltyText.color = Color.red;
+                raceDecisionText.text = "YOU LOST!";
+                raceDecisionText.color = Color.red;
             }
         }
     }
