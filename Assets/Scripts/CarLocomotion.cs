@@ -22,14 +22,14 @@ public class CarLocomotion : MonoBehaviour
     {
         carRigidbody = GetComponent<Rigidbody>();
 
-        // Give AI car more torque than the player for higher difficulties
+        // Give AI slightly more torque and higher top speed than the player for higher difficulties
         if (carRigidbody.name == "AI Car")
         {
             switch (RaceSettings.RaceDifficulty)
             {
                 case RaceDifficulty.Easy: break;
                 case RaceDifficulty.Medium: SetDifficulty(15f, 525f); break;
-                case RaceDifficulty.Hard: SetDifficulty(15f, 550f); break;
+                case RaceDifficulty.Hard: SetDifficulty(16f, 550f); break;
                 default:
                     break;
             }

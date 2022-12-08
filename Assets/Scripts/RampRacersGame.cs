@@ -14,7 +14,6 @@ namespace Assets.Scripts
         private bool AIFinishedRace = false;
 
         private Stopwatch raceStopwatch;
-        private Stopwatch finishStopwatch;
 
         // UI texts
         public TextMeshPro countdownText;
@@ -44,7 +43,6 @@ namespace Assets.Scripts
             Time.timeScale = 1;
             //Initialise stopwatch
             raceStopwatch = new Stopwatch();
-            finishStopwatch = new Stopwatch();
             difficultyText.text = $"Difficulty: {RaceSettings.RaceDifficulty}";
             lapsText.text = $"Laps: {RaceSettings.Laps}";
         }

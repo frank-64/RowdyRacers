@@ -33,6 +33,8 @@ public class AITrackPathfinding : MonoBehaviour
 
     private bool overtaking;
     private double overtakeProbability = 1;
+    private float overtakeTimer = 0.0f;
+    private float overtakeCooldown = 5.0f;
     private bool playerInFront;
     private float overtakingTorque = 650f;
     private float standardTorque;
@@ -52,9 +54,9 @@ public class AITrackPathfinding : MonoBehaviour
 
         switch (RaceSettings.RaceDifficulty)
         {
-            case RaceDifficulty.Easy: overtakeProbability = 0.2; break; // 20% chance of overtake for Easy
-            case RaceDifficulty.Medium: overtakeProbability = 0.5; break; // 50% chance of overtake for Medium
-            case RaceDifficulty.Hard: overtakeProbability = 0.8; break; // 80% chance of overtake for Hard
+            case RaceDifficulty.Easy: overtakeProbability = 0.1; break; // 10% chance of overtake for Easy
+            case RaceDifficulty.Medium: overtakeProbability = 0.2; break; // 20% chance of overtake for Medium
+            case RaceDifficulty.Hard: overtakeProbability = 0.5; break; // 50% chance of overtake for Hard
             default:
                 break;
         }
@@ -73,6 +75,7 @@ public class AITrackPathfinding : MonoBehaviour
         overtaking = true;
         yield return new WaitForSeconds(3f);
         overtaking = false;
+        overtakeTimer =- overtakeCooldown;
     }
 
     void Update()
@@ -82,7 +85,9 @@ public class AITrackPathfinding : MonoBehaviour
             return;
         }
 
-        if (!overtaking) 
+        overtakeTimer += Time.deltaTime;
+
+        if (!overtaking && overtakeTimer > overtakeCooldown) 
         {
             Vector3 playerCarInversePoint = transform.InverseTransformPoint(PlayerCarRigidbody.position);
 
@@ -105,7 +110,7 @@ public class AITrackPathfinding : MonoBehaviour
                 int number = rand.Next(0, 100);
                 if (number <= overtakeProbability * 100) // Determine if random number falls under probability for overtake
                 {
-                    UnityEngine.Debug.Log($"AI attempting overtake!");
+                    UnityEngine.Debug.Log($"AI attempting overtake! {number}<{overtakeProbability*100}");
                     StartCoroutine(CommenceOvertake());
                 }
             }

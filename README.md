@@ -17,10 +17,12 @@
 
 # Known Issues
 - There will be warnings in the RampMode scene as the tree's placed through the Terrain aren't successfully creating their colliders and placing 100s of tree prefabs with the colliders would take too long.
+- The AI does not work as expected once the game has been built and all testing occured in Unity before being built.
 
 # Play Instructions Race Game
 - Use the arrow keys left and right to steer.
 - Use the arrow keys forward and backwards to accelerate/brake.
+- 1 lap and Easy is the default race settings.
 
 # Play Instructions Minigame
 - Use the space button to jump.

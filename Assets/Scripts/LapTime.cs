@@ -79,7 +79,7 @@ public class LapTime : MonoBehaviour
     [HideInInspector] public double totalPenaltySeconds = 0;
     public TimeSpan totalRaceTimeSpan => lapInfo.raceTimeSpan;
 
-    // Start is called before the first frame update
+
     public void Start()
     {
         lapInfo = new LapInfo();
