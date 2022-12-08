@@ -4,5 +4,23 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 1
+    path: Assets/Scenes/RaceMode.unity
+    guid: 7f9523ac7876e2e4f916f8e44158f0a3
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: b1a6bc79e4807aa499d2614c6de39b4a
+  - enabled: 1
+    path: Assets/Scenes/SpaceMode.unity
+    guid: 9bdd573bd755ab14ba643b5749d13300
+  - enabled: 1
+    path: Assets/Scenes/DungeonMode.unity
+    guid: 62acf05eae5ca3b4fb13a83752f1dfd2
   m_configObjects: {}

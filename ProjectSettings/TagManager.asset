@@ -8,6 +8,11 @@ TagManager:
   - Fire
   - PlayerCar
   - AICar
+  - Lava
+  - UI
+  - Road
+  - Terrain
+  - Dungeon
   layers:
   - Default
   - TransparentFX
@@ -17,9 +22,9 @@ TagManager:
   - UI
   - Road
   - Finish Line
-  - Car
-  - 
-  - 
+  - AI Car
+  - Dungeon
+  - Player Car
   - 
   - 
   - 
