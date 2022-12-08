@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static Cinemachine.CinemachineTriggerAction.ActionSettings;
 
 public enum RaceDifficulty
 {
@@ -14,7 +13,7 @@ public enum RaceDifficulty
 
 public static class RaceSettings
 {
-    public static int Laps { get; set; } = 1;
+    public static int Laps { get; set; } = 2;
     public static RaceDifficulty RaceDifficulty { get; set; }
 }
 
@@ -67,10 +66,6 @@ public class MenuSystem : MonoBehaviour
         {
             StartHelpMenu();
         }
-        else if (Input.GetKeyDown(KeyCode.G))
-        {
-            StartRampMode();
-        } 
         else if (Input.GetKeyDown(KeyCode.R))
         {
             StartRaceMenu();
@@ -148,11 +143,6 @@ public class MenuSystem : MonoBehaviour
     void StartRaceMode()
     {
         SceneManager.LoadScene("RaceMode", LoadSceneMode.Single);
-    }
-
-    void StartRampMode()
-    {
-
     }
 
     void SetEasyDifficulty()

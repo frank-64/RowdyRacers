@@ -12,48 +12,55 @@ namespace Assets.Scripts
     public class PlayerCarControl : MonoBehaviour
     {
         [SerializeField] private CarLocomotion carLocomotion;
-        [SerializeField] private Rigidbody carRigidBody;
         [SerializeField] private List<WheelScript> wheels;
         [SerializeField] private LapTime lapTime;
-        [SerializeField] private bool isRampMode;
-        public bool driving = false;
 
-        private Stopwatch allWheelsOffTrackStopwatch;
+        [HideInInspector] public bool driving = false;
+        public Rigidbody carRigidBody;
+
+        private Stopwatch allPlayerWheelsOffTrackStopwatch;
 
         private void Start()
         {
-            allWheelsOffTrackStopwatch = new Stopwatch();
+            allPlayerWheelsOffTrackStopwatch = new Stopwatch();
         }
 
         private void Update()
         {
-            if (wheels.Any())
+            if (!wheels.Any()) // No wheels so return ASAP
             {
-                TimeSpan timeSpanOffTrack = allWheelsOffTrackStopwatch.Elapsed;
-                // Check if all four wheels have left the track
-                if (wheels[0].WheelColliderLeftTrack && wheels[1].WheelColliderLeftTrack && wheels[2].WheelColliderLeftTrack && wheels[3].WheelColliderLeftTrack)
-                {
-                    if (!allWheelsOffTrackStopwatch.IsRunning)
-                    {
-                        allWheelsOffTrackStopwatch.Start();
-                    }
-                    else if (allWheelsOffTrackStopwatch.IsRunning && timeSpanOffTrack.TotalSeconds > 1)
-                    {
-                        lapTime.penaltyOverlay.SetActive(true); // Red screen negative feedback loop for leaving track
-                    }
-                }
-                else
-                {
-                    if (allWheelsOffTrackStopwatch.IsRunning)
-                    {
-                        lapTime.penaltyOverlay.SetActive(false);
-                        allWheelsOffTrackStopwatch.Stop();
+                return;
+            }
 
-                        allWheelsOffTrackStopwatch.Reset();
-                        if (timeSpanOffTrack.TotalSeconds > 1)
-                        {
-                            lapTime.CalculatePenalty(timeSpanOffTrack);
-                        }
+            if (!driving) // Car not driving so return ASAP
+            {
+                return;
+            }
+
+            TimeSpan timeSpanOffTrack = allPlayerWheelsOffTrackStopwatch.Elapsed;
+            // Check if all four wheels have left the track
+            if (wheels[0].WheelColliderLeftTrack && wheels[1].WheelColliderLeftTrack && wheels[2].WheelColliderLeftTrack && wheels[3].WheelColliderLeftTrack)
+            {
+                if (!allPlayerWheelsOffTrackStopwatch.IsRunning)
+                {
+                    allPlayerWheelsOffTrackStopwatch.Start();
+                }
+                else if (allPlayerWheelsOffTrackStopwatch.IsRunning && timeSpanOffTrack.TotalSeconds > 1 && driving)
+                {
+                    lapTime.penaltyOverlay.SetActive(true); // Screen overlay negative feedback for leaving track
+                }
+            }
+            else
+            {
+                if (allPlayerWheelsOffTrackStopwatch.IsRunning)
+                {
+                    lapTime.penaltyOverlay.SetActive(false);
+                    allPlayerWheelsOffTrackStopwatch.Stop();
+
+                    allPlayerWheelsOffTrackStopwatch.Reset();
+                    if (timeSpanOffTrack.TotalSeconds > 1)
+                    {
+                        lapTime.CalculatePenalty(timeSpanOffTrack);
                     }
                 }
             }
@@ -65,14 +72,7 @@ namespace Assets.Scripts
             {
                 float verticalInput = Input.GetAxis("Vertical");
                 float horizontalInput = Input.GetAxis("Horizontal");
-                if (isRampMode)
-                {
-                    carLocomotion.Drive(0, verticalInput);
-                }
-                else
-                {
-                    carLocomotion.Drive(horizontalInput, verticalInput);
-                }
+                carLocomotion.Drive(horizontalInput, verticalInput);
             }
         }
     }

@@ -2,22 +2,25 @@ using Assets.Scripts;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class AITrackPathfinding : MonoBehaviour
 {
-    [SerializeField] private Rigidbody AICarRigidbody;
-
     [SerializeField] private CarLocomotion carLocomotion;
 
-    [SerializeField][Range(0, 1)] private float m_CautiousSpeedFactor = 0.05f;               // percentage of max speed to use when being maximally cautious
-    [SerializeField][Range(0, 180)] private float m_CautiousMaxAngle = 40f;                  // angle of approaching corner to treat as warranting maximum caution
-    [SerializeField] private float m_CautiousMaxDistance = 100f;                              // distance at which distance-based cautiousness begins
-    [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
-    [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
-    [SerializeField] private float m_AccelSensitivity = 1f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
-    [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
+    // Variables used for Unity standard assets pathfinding code
+    private float m_CautiousSpeedFactor = 0.05f;
+    private float m_CautiousMaxAngle = 40f;
+    private float m_CautiousAngularVelocityFactor = 30f;
+    private float m_SteerSensitivity = 0.05f;
+    private float m_AccelSensitivity = 1f;
+    private float m_BrakeSensitivity = 1f;
+
+    [SerializeField] private List<WheelScript> wheels;
+    [SerializeField] private LapTime lapTime;
 
     private List<Transform> waypoints;
     private Transform targetWaypoint;
@@ -29,13 +32,33 @@ public class AITrackPathfinding : MonoBehaviour
     private float waitTime = 3.0f;
     private float timer = 0.0f;
 
-    [HideInInspector] public bool driving = false;
+    private bool overtaking;
+    private double overtakeProbability = 1;
+    private bool playerInFront;
+    private float overtakingTorque = 650f;
+    private float standardTorque;
+
+    public bool driving = false;
+    public Rigidbody AICarRigidbody;
+    public Rigidbody PlayerCarRigidbody;
+    private Stopwatch allAIWheelsOffTrackStopwatch;
 
     private void Start()
     {
         waypoints = GameObject.FindGameObjectsWithTag("Waypoint").Select(waypoint => waypoint.transform).ToList();
         targetWaypoint = waypoints[waypointIndex];
         waypointCount = waypoints.Count();
+        allAIWheelsOffTrackStopwatch = new Stopwatch();
+        standardTorque = carLocomotion.maxMotorTorque;
+
+        switch (RaceSettings.RaceDifficulty)
+        {
+            case RaceDifficulty.Easy: overtakeProbability = 0.2; break; // 20% chance of overtake for Easy
+            case RaceDifficulty.Medium: overtakeProbability = 0.5; break; // 50% chance of overtake for Medium
+            case RaceDifficulty.Hard: overtakeProbability = 0.8; break; // 80% chance of overtake for Hard
+            default:
+                break;
+        }
     }
     IEnumerator CommenceReverse()
     {
@@ -43,28 +66,68 @@ public class AITrackPathfinding : MonoBehaviour
         carLocomotion.Drive(0, -1);
         yield return new WaitForSeconds(1.75f);
         reversing = false;
-        Debug.Log("AI car is free");
+        UnityEngine.Debug.Log("AI car is free");
+    }
+
+    IEnumerator CommenceOvertake()
+    {
+        overtaking = true;
+        yield return new WaitForSeconds(3f);
+        overtaking = false;
     }
 
     void Update()
     {
-        if (driving)
+        if (!driving) // Car not driving so return ASAP
         {
-            timer += Time.deltaTime;
+            return;
+        }
 
-            // Check if we have reached beyond 3 seconds without moving in x axis
-            if (timer > waitTime)
+        if (!overtaking) 
+        {
+            Vector3 playerCarInversePoint = transform.InverseTransformPoint(PlayerCarRigidbody.position);
+
+            float distanceToPlayer = Vector3.Distance(PlayerCarRigidbody.transform.position, AICarRigidbody.transform.position);
+            float distanceToWaypoint = Vector3.Distance(AICarRigidbody.transform.position, targetWaypoint.position);
+
+            if (playerCarInversePoint.z > 0)
             {
-                if (Math.Round(previousPosition.x, 1) == Math.Round(AICarRigidbody.position.x, 1))
+                playerInFront = true;
+            }
+            else
+            {
+                playerInFront = false;
+            }
+
+            // Determine if overtake should take place depending on distance to the player, if the player is in front and distance remaining to target waypoint
+            if (distanceToPlayer < 8f && playerInFront && distanceToWaypoint > 15f)
+            {
+                System.Random rand = new System.Random();
+                int number = rand.Next(0, 100);
+                if (number <= overtakeProbability * 100) // Determine if random number falls under probability for overtake
                 {
-                    Debug.Log("AI Car is stuck");
-                    reversing = true;
-                    StartCoroutine(CommenceReverse());
+                    UnityEngine.Debug.Log($"AI attempting overtake! {number}<{100 * overtakeProbability}");
+                    StartCoroutine(CommenceOvertake());
                 }
-                previousPosition = AICarRigidbody.position;
-                timer = timer - waitTime;
             }
         }
+
+        timer += Time.deltaTime;
+
+        // Check if we have reached beyond 3 seconds without moving in x axis
+        if (timer > waitTime)
+        {
+            if (Math.Round(previousPosition.x, 1) == Math.Round(AICarRigidbody.position.x, 1))
+            {
+                UnityEngine.Debug.Log("AI Car is stuck");
+                reversing = true;
+                StartCoroutine(CommenceReverse());
+            }
+            previousPosition = AICarRigidbody.position;
+            timer = timer - waitTime;
+        }
+
+        // Update to next waypoint
         if (Vector3.Distance(AICarRigidbody.position, targetWaypoint.position) < 5f)
         {
             if (waypointIndex != waypointCount - 1)
@@ -72,19 +135,64 @@ public class AITrackPathfinding : MonoBehaviour
                 waypointIndex += 1;
                 targetWaypoint = waypoints[waypointIndex];
             }
+            else
+            {
+                waypointIndex = 0;
+                targetWaypoint = waypoints[waypointIndex];
+            }
+        }
+
+        if (!wheels.Any()) // No wheels assigned so return
+        {
+            return;
+        }
+
+        TimeSpan timeSpanOffTrack = allAIWheelsOffTrackStopwatch.Elapsed;
+        // Check if all four wheels have left the track
+        if (wheels[0].WheelColliderLeftTrack && wheels[1].WheelColliderLeftTrack && wheels[2].WheelColliderLeftTrack && wheels[3].WheelColliderLeftTrack)
+        {
+            if (!allAIWheelsOffTrackStopwatch.IsRunning)
+            {
+                allAIWheelsOffTrackStopwatch.Start();
+            }
+        }
+        else
+        {
+            if (allAIWheelsOffTrackStopwatch.IsRunning)
+            {
+                allAIWheelsOffTrackStopwatch.Stop();
+
+                allAIWheelsOffTrackStopwatch.Reset();
+                if (timeSpanOffTrack.TotalSeconds > 1)
+                {
+                    lapTime.CalculatePenalty(timeSpanOffTrack);
+                }
+            }
         }
     }
 
     private void FixedUpdate()
     {
-        if (targetWaypoint == null || !driving)
+        if (!driving)
         {
-            // Car should not be moving,
-            // use handbrake to stop
-            carLocomotion.Drive(0, 0);
+            return;
         }
-        else if (!reversing)
+
+        Vector3 offsetTargetPos = targetWaypoint.position;
+        if (overtaking)
         {
+            offsetTargetPos += targetWaypoint.right * 2;
+            carLocomotion.maxMotorTorque = overtakingTorque;
+        }
+        else
+        {
+            carLocomotion.maxMotorTorque = standardTorque;
+        }
+
+        if (!reversing)
+        {
+            //NOTE: The following waypoint pathfinding code is adapted from the Unity standard assets
+
             Vector3 fwd = transform.forward;
             if (AICarRigidbody.velocity.magnitude > carLocomotion.topSpeed * 0.1f)
             {
@@ -108,18 +216,23 @@ public class AITrackPathfinding : MonoBehaviour
             desiredSpeed = Mathf.Lerp(carLocomotion.topSpeed, carLocomotion.topSpeed * m_CautiousSpeedFactor,
                                         cautiousnessRequired);
 
-
-
-            // Overtaking?
-            //Vector3 offsetTargetPos = targetWaypoint.position;
-            //offsetTargetPos += targetWaypoint.right * m_AvoidPathOffset;
-
             float accelBrakeSensitivity = (desiredSpeed < carLocomotion.currentSpeed)
                                               ? m_BrakeSensitivity
                                               : m_AccelSensitivity;
 
             // decide the actual amount of accel/brake input to achieve desired speed.
             float accel = Mathf.Clamp(desiredSpeed * accelBrakeSensitivity, -1, 1);
+
+            // calculate the local-relative position of the target, to steer towards
+            Vector3 localTarget = transform.InverseTransformPoint(offsetTargetPos);
+
+            // work out the local angle towards the target
+            float targetAngle = Mathf.Atan2(localTarget.x, localTarget.z) * Mathf.Rad2Deg;
+
+            // get the amount of steering needed to aim the car towards the target
+            float steer = Mathf.Clamp(targetAngle * m_SteerSensitivity, -1, 1) * Mathf.Sign(carLocomotion.currentSpeed);
+
+            //END of pathfinding code from Unity standard assets
 
             Waypoint target = targetWaypoint.GetComponent<Waypoint>(); // Get current target waypoint properties from script
 
@@ -143,16 +256,6 @@ public class AITrackPathfinding : MonoBehaviour
                 }
             }
 
-            // calculate the local-relative position of the target, to steer towards
-            Vector3 localTarget = transform.InverseTransformPoint(targetWaypoint.position);
-
-            // work out the local angle towards the target
-            float targetAngle = Mathf.Atan2(localTarget.x, localTarget.z) * Mathf.Rad2Deg;
-
-            // get the amount of steering needed to aim the car towards the target
-            float steer = Mathf.Clamp(targetAngle * m_SteerSensitivity, -1, 1) * Mathf.Sign(carLocomotion.currentSpeed);
-
-            // feed input to the car controller.
             carLocomotion.Drive(steer, accel);
         }
     }

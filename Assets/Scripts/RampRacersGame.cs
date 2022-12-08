@@ -10,11 +10,13 @@ namespace Assets.Scripts
     public class RampRacersGame : MonoBehaviour
     {
         [HideInInspector] public bool hasRaceCommenced = false;
-        private bool hasCarFinishedRace = false;
+        private bool playerFinishedRace = false;
+        private bool AIFinishedRace = false;
 
         private Stopwatch raceStopwatch;
+        private Stopwatch finishStopwatch;
 
-        // get countdown text and stopwatch text
+        // UI texts
         public TextMeshPro countdownText;
         public TextMeshPro raceStopwatchText;
         public TextMeshPro finishedRaceText;
@@ -22,31 +24,31 @@ namespace Assets.Scripts
         public TextMeshPro raceDecisionText;
         public TextMeshPro difficultyText;
         public TextMeshPro lapsText;
-        public TextMeshPro restartRaceText;
-        public TextMeshPro mainMenuText;
+        public TextMeshPro messageText;
         public GameObject RaceInitiatedUIObject;
         public GameObject StartRaceUIObject;
         public GameObject FinishedRaceUIObject;
+        public GameObject KeysUIObject;
 
 
-        // get car LapTimes involved in race
+        // car LapTime objects involved in race
         [SerializeField] private LapTime playerLapTime;
         [SerializeField] private LapTime AILapTime;
 
+        // car control scripts for player and AI
         [SerializeField] private PlayerCarControl playerCarControl;
         [SerializeField] private AITrackPathfinding AIPathfinding;
 
-        // Use this for initialization
         void Start()
         {
             Time.timeScale = 1;
-            //Initialise objects
+            //Initialise stopwatch
             raceStopwatch = new Stopwatch();
+            finishStopwatch = new Stopwatch();
             difficultyText.text = $"Difficulty: {RaceSettings.RaceDifficulty}";
             lapsText.text = $"Laps: {RaceSettings.Laps}";
         }
 
-        // Update is called once per frame
         void Update()
         {
             // Get user to hit the space bar before they can continue with the race
@@ -69,6 +71,30 @@ namespace Assets.Scripts
             {
                 raceStopwatchText.text = raceStopwatch.Elapsed.StripMilliseconds().ToString();
             }
+
+            
+            if (!playerFinishedRace && !AIFinishedRace) // Return if neither have finished race
+            {
+                return;
+            }
+            else if (playerFinishedRace && AIFinishedRace) // Display decision once both have finished
+            {
+                DisplayDecision();
+            }
+
+            if (finishStopwatch.IsRunning) 
+            {
+                TimeSpan timeSpanSinceFinish = finishStopwatch.Elapsed;
+                if (timeSpanSinceFinish.TotalSeconds > playerLapTime.totalPenaltySeconds) // Display decision after penalty seconds as AI can't win 
+                {
+                    DisplayDecision();
+                }
+            }
+            
+            if (playerFinishedRace && !AIFinishedRace)
+            {
+                finishStopwatch.Start();
+            }
         }
 
         IEnumerator Countdown()
@@ -87,11 +113,11 @@ namespace Assets.Scripts
 
         void StartGame()
         {
-            //Initiate countdown - cars can't move until countdown over
+            // Initiate countdown - cars can't move until countdown over
+            // Hide UI 
             countdownText.gameObject.SetActive(true);
             StartRaceUIObject.SetActive(false);
-            restartRaceText.gameObject.SetActive(false);
-            mainMenuText.gameObject.SetActive(false);
+            KeysUIObject.SetActive(false);
             totalPenaltyText.gameObject.SetActive(false);
             StartCoroutine(Countdown());
         }
@@ -119,43 +145,43 @@ namespace Assets.Scripts
         {
             if (car.name == "PlayerCar")
             {
-                FinishedRaceUI();
-                StartCoroutine(FinishLineCrossed(true));
-            }
-            else
-            {
-                hasCarFinishedRace = true;
-                StartCoroutine(FinishLineCrossed(false));
-            }
-        }
-        
-        IEnumerator FinishLineCrossed(bool isPlayer)
-        {
-            yield return new WaitForSeconds(1f);
-            if (isPlayer)
-            {
+                playerFinishedRace = true;
                 playerCarControl.driving = false;
+                FinishedRaceUI();
+                StartCoroutine(StopCar(playerCarControl.carRigidBody));
             }
             else
             {
                 AIPathfinding.driving = false;
+                AIFinishedRace = true;
+                StartCoroutine(StopCar(AIPathfinding.AICarRigidbody));
             }
+        }
+
+        IEnumerator StopCar(Rigidbody rigidbody)
+        {
+            yield return new WaitForSeconds(1f);
+            rigidbody.velocity = Vector3.zero;
         }
 
         public void FinishedRaceUI()
         {
             raceStopwatch.Stop();
             raceStopwatchText.color = Color.green;
+
             FinishedRaceUIObject.SetActive(true);
-            restartRaceText.gameObject.SetActive(true);
-            mainMenuText.gameObject.SetActive(true);
+            KeysUIObject.SetActive(true);
             if (playerLapTime.totalPenaltySeconds > 0) // Display penalties obtained during race
             {
                 totalPenaltyText.gameObject.SetActive(true);
                 totalPenaltyText.text = $"Total penalties: +{Math.Round(playerLapTime.totalPenaltySeconds)}s";
             }
+        }
 
-            if (!hasCarFinishedRace) // Display race decision
+        public void DisplayDecision()
+        {
+            // Display race decision based on each car race time span (including penalties)
+            if (playerLapTime.totalRaceTimeSpan < AILapTime.totalRaceTimeSpan)
             {
                 raceDecisionText.color = Color.green;
                 raceDecisionText.text = "YOU WON!";
@@ -165,6 +191,13 @@ namespace Assets.Scripts
                 raceDecisionText.text = "YOU LOST!";
                 raceDecisionText.color = Color.red;
             }
+        }
+
+        public void InvalidLap()
+        {
+            RaceInitiatedUIObject.SetActive(false);
+            KeysUIObject.SetActive(true);
+            messageText.text = "You missed too many waypoints!";
         }
     }
 }

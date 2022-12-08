@@ -14,17 +14,30 @@ public class AxleInfo {
 public class CarLocomotion : MonoBehaviour
 {
     public List<AxleInfo> axleInfos;
-    [SerializeField] private float maxMotorTorque;
-    [SerializeField] private float maxSteeringAngle;
+    public float maxMotorTorque = 500f;
+    private float maxSteeringAngle = 50f;
 
     public float currentSpeed { get { return carRigidbody.velocity.magnitude; } }
-    public float topSpeed = 12f;
+    public float topSpeed = 15f;
 
     private Rigidbody carRigidbody;
 
     public void Start()
     {
         carRigidbody = GetComponent<Rigidbody>();
+
+        // Give AI car more torque than the player for higher difficulties
+        if (carRigidbody.name == "AI Car")
+        {
+            switch (RaceSettings.RaceDifficulty)
+            {
+                case RaceDifficulty.Easy: break;
+                case RaceDifficulty.Medium: SetDifficulty(15f, 525f); break;
+                case RaceDifficulty.Hard: SetDifficulty(15f, 550f); break;
+                default:
+                    break;
+            }
+        }
     }
 
     public void Drive(float steer, float acceleration)
@@ -53,6 +66,12 @@ public class CarLocomotion : MonoBehaviour
         {
             carRigidbody.velocity = topSpeed * carRigidbody.velocity.normalized;
         }
+    }
+
+    private void SetDifficulty(float speed, float torque)
+    {
+        topSpeed = speed;
+        maxMotorTorque = torque;
     }
 }
 

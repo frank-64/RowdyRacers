@@ -144,28 +144,4 @@ public class MinigameMode : MonoBehaviour
         gravityVector = Vector3.down * accelerationDueToGravity;
         return gravityVector;
     }
-
-    
-
-    //Vector3 OppositeVector(Vector3 collsionVelocity, Vector3 preCollisionVelocity)
-    //{
-    //    if (collsionVelocity.x == 0)
-    //    {
-    //        return new Vector3(-preCollisionVelocity.x, preCollisionVelocity.y, preCollisionVelocity.z);
-    //    }else if (collsionVelocity.y == 0)
-    //    {
-    //        return new Vector3(preCollisionVelocity.x, -preCollisionVelocity.y, preCollisionVelocity.z);
-    //    }else if (collsionVelocity.z == 0)
-    //    {
-    //        return new Vector3(preCollisionVelocity.x, preCollisionVelocity.y, -preCollisionVelocity.z);
-    //    }
-    //    return preCollisionVelocity;
-    //}
-
-    //void OnCollisionEnter()
-    //{
-    //    Vector3 oppositeVector = OppositeVector(BouncyBall.velocity, currentVelocity);
-    //    Debug.Log(oppositeVector);
-    //    BouncyBall.AddForce(oppositeVector * 0.8f, ForceMode.Impulse);
-    //}
 }
