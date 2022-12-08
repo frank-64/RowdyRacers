@@ -1,5 +1,6 @@
 # RowdyRacers
-## Frankie Clipsham's final year Computer Science coursework for the Gaming Technologies and Simulations module at Newcastle University
+GitHub Repo: https://github.com/frank-64/RampRacers
+Frankie Clipsham's final year Computer Science coursework for the Gaming Technologies and Simulations module at Newcastle University
 
 # Libraries used
 - Flocking algorithm - PSFlocking https://github.com/Floppi003/PSFlockingLibrary for the files PSFlockingUnit.cs and PSUnitManager.cs.
@@ -17,7 +18,7 @@
 
 # Known Issues
 - There will be warnings in the RampMode scene as the tree's placed through the Terrain aren't successfully creating their colliders and placing 100s of tree prefabs with the colliders would take too long.
-- The AI does not work as expected once the game has been built and all testing occured in Unity before being built.
+- The AI does not work as expected once the game has been built as all testing occured in Unity before being built.
 
 # Play Instructions Race Game
 - Use the arrow keys left and right to steer.
