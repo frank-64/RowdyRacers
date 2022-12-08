@@ -1,6 +1,12 @@
 # RowdyRacers
-- GitHub Repo: https://github.com/frank-64/RampRacers
+
+# About
 - Frankie Clipsham's final year Computer Science coursework for the Gaming Technologies and Simulations module at Newcastle University
+
+# Installing
+If you have GitBash installed then type the following into your terminal: 
+
+git clone https://github.com/frank-64/RowdyRacers
 
 # Libraries used
 - Flocking algorithm - PSFlocking https://github.com/Floppi003/PSFlockingLibrary for the files PSFlockingUnit.cs and PSUnitManager.cs.
