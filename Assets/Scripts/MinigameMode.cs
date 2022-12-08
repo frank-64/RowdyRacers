@@ -1,6 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,11 +8,13 @@ public class MinigameMode : MonoBehaviour
     [SerializeField] private GameObject menuUI;
     [SerializeField] private GameObject deathUI;
     [SerializeField] private GameObject wonUI;
-    [SerializeField] private Rigidbody ball;
     [SerializeField] private TextMeshPro gravityText;
-    [SerializeField] private TextMeshPro deathText;
+    [SerializeField] private TextMeshPro message;
+    [SerializeField] private Rigidbody ball;
+    [SerializeField] private Rigidbody asteroid;
+    [SerializeField] private GameObject UFOInstantiator;
     private float accelerationDueToGravityOnEarth = 9.81f; // Assuming the Dungeon is on Earth
-    private float accelerationDueToGravityOnCeres = 13.0f; // Not factual
+    private float accelerationDueToGravityOnCeres = 13.0f;
     private Vector3 gravityVector;
     private bool levelStarted = false;
     private bool gameOver = false;
@@ -90,6 +90,7 @@ public class MinigameMode : MonoBehaviour
             }
             else
             {
+                asteroid.useGravity = true;
                 gravityVector = GravityVector(accelerationDueToGravity: accelerationDueToGravityOnCeres);
             }
             ball.AddForce(gravityVector);
@@ -102,7 +103,7 @@ public class MinigameMode : MonoBehaviour
         menuUI.SetActive(false);
         deathUI.SetActive(false);
         wonUI.SetActive(false);
-        deathText.gameObject.SetActive(false);
+        message.gameObject.SetActive(false);
         ball.AddForce(Vector3.right * 3f, ForceMode.Impulse);
     }
 
@@ -110,8 +111,11 @@ public class MinigameMode : MonoBehaviour
     {
         Time.timeScale = 0;
         deathUI.SetActive(true);
-        deathText.gameObject.SetActive(true);
-        deathText.text = "You died!";
+        if (collision.gameObject.tag == "UFO")
+        {
+            message.gameObject.SetActive(true);
+            message.text = "You died to a UFO!";
+        }
     }
 
     private void OnTriggerEnter(Collider collision)
@@ -128,15 +132,29 @@ public class MinigameMode : MonoBehaviour
         {
             gameOver = true;
             wonUI.SetActive(true);
+            message.text = "You avoided the alien fleet!";
             Time.timeScale = 0;
         }
         else if (isSpaceMode && collision.gameObject.CompareTag("Ceiling"))
         {
             Time.timeScale = 0;
             deathUI.SetActive(true);
-            deathText.gameObject.SetActive(true);
-            deathText.text = "You flew off into space!";
+            message.gameObject.SetActive(true);
+            message.text = "You flew off into space!";
         }
+        else if (isSpaceMode && collision.gameObject.CompareTag("UFO Collider"))
+        {
+            UFOInstantiator.SetActive(true);
+            StartCoroutine(AlienMessage());
+        }
+    }
+
+    IEnumerator AlienMessage()
+    {
+        message.gameObject.SetActive(true);
+        message.text = "Alien attack!";
+        yield return new WaitForSeconds(1f);
+        message.gameObject.SetActive(false);
     }
 
     public Vector3 GravityVector (float accelerationDueToGravity)

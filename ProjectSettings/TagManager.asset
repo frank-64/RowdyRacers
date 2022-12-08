@@ -13,6 +13,8 @@ TagManager:
   - Road
   - Terrain
   - Dungeon
+  - Ceiling
+  - UFO
   layers:
   - Default
   - TransparentFX

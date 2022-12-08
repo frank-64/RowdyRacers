@@ -13,7 +13,7 @@ public enum RaceDifficulty
 
 public static class RaceSettings
 {
-    public static int Laps { get; set; } = 2;
+    public static int Laps { get; set; } = 1;
     public static RaceDifficulty RaceDifficulty { get; set; }
 }
 
@@ -52,7 +52,7 @@ public class MenuSystem : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        switch (gameMode)
+        switch (gameMode) // Manage menu state
         {
             case GameMode.MainMenu: UpdateMainMenu(); break;
             case GameMode.HelpMenu: UpdateHelpMenu(); break;

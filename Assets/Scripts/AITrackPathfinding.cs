@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class AITrackPathfinding : MonoBehaviour
@@ -66,7 +65,7 @@ public class AITrackPathfinding : MonoBehaviour
         carLocomotion.Drive(0, -1);
         yield return new WaitForSeconds(1.75f);
         reversing = false;
-        UnityEngine.Debug.Log("AI car is free");
+        UnityEngine.Debug.Log("AI is free!");
     }
 
     IEnumerator CommenceOvertake()
@@ -106,7 +105,7 @@ public class AITrackPathfinding : MonoBehaviour
                 int number = rand.Next(0, 100);
                 if (number <= overtakeProbability * 100) // Determine if random number falls under probability for overtake
                 {
-                    UnityEngine.Debug.Log($"AI attempting overtake! {number}<{100 * overtakeProbability}");
+                    UnityEngine.Debug.Log($"AI attempting overtake!");
                     StartCoroutine(CommenceOvertake());
                 }
             }
@@ -119,8 +118,8 @@ public class AITrackPathfinding : MonoBehaviour
         {
             if (Math.Round(previousPosition.x, 1) == Math.Round(AICarRigidbody.position.x, 1))
             {
-                UnityEngine.Debug.Log("AI Car is stuck");
                 reversing = true;
+                UnityEngine.Debug.Log("AI is stuck!");
                 StartCoroutine(CommenceReverse());
             }
             previousPosition = AICarRigidbody.position;

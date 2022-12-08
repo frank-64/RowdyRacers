@@ -73,28 +73,12 @@ namespace Assets.Scripts
             }
 
             
-            if (!playerFinishedRace && !AIFinishedRace) // Return if neither have finished race
+            if (!(playerFinishedRace && AIFinishedRace)) // Return if neither have finished race
             {
                 return;
             }
-            else if (playerFinishedRace && AIFinishedRace) // Display decision once both have finished
-            {
-                DisplayDecision();
-            }
 
-            if (finishStopwatch.IsRunning) 
-            {
-                TimeSpan timeSpanSinceFinish = finishStopwatch.Elapsed;
-                if (timeSpanSinceFinish.TotalSeconds > playerLapTime.totalPenaltySeconds) // Display decision after penalty seconds as AI can't win 
-                {
-                    DisplayDecision();
-                }
-            }
-            
-            if (playerFinishedRace && !AIFinishedRace)
-            {
-                finishStopwatch.Start();
-            }
+            DisplayDecision();
         }
 
         IEnumerator Countdown()
