@@ -132,7 +132,8 @@ public class MinigameMode : MonoBehaviour
         {
             gameOver = true;
             wonUI.SetActive(true);
-            message.text = "You avoided the alien fleet!";
+            message.gameObject.SetActive(true);
+            message.text = "Nice job avoiding the alien fleet!";
             Time.timeScale = 0;
         }
         else if (isSpaceMode && collision.gameObject.CompareTag("Ceiling"))
@@ -153,7 +154,7 @@ public class MinigameMode : MonoBehaviour
     {
         message.gameObject.SetActive(true);
         message.text = "Alien attack!";
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(2f);
         message.gameObject.SetActive(false);
     }
 

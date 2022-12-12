@@ -63,11 +63,10 @@ public class AITrackPathfinding : MonoBehaviour
     }
     IEnumerator CommenceReverse()
     {
-        // Drive backwards for 2 seconds then resume aiming for waypoints
+        // Drive backwards for 2 seconds then resume aiming for target waypoint
         carLocomotion.Drive(0, -1);
         yield return new WaitForSeconds(1.75f);
         reversing = false;
-        UnityEngine.Debug.Log("AI is free!");
     }
 
     IEnumerator CommenceOvertake()
@@ -110,7 +109,7 @@ public class AITrackPathfinding : MonoBehaviour
                 int number = rand.Next(0, 100);
                 if (number <= overtakeProbability * 100) // Determine if random number falls under probability for overtake
                 {
-                    UnityEngine.Debug.Log($"AI attempting overtake! {number}<{overtakeProbability*100}");
+                    UnityEngine.Debug.Log($"AI attempting overtake!");
                     StartCoroutine(CommenceOvertake());
                 }
             }
@@ -124,8 +123,7 @@ public class AITrackPathfinding : MonoBehaviour
             if (Math.Round(previousPosition.x, 1) == Math.Round(AICarRigidbody.position.x, 1))
             {
                 reversing = true;
-                UnityEngine.Debug.Log("AI is stuck!");
-                StartCoroutine(CommenceReverse());
+                StartCoroutine(CommenceReverse()); // AI is stuck
             }
             previousPosition = AICarRigidbody.position;
             timer = timer - waitTime;
