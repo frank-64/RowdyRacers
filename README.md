@@ -24,7 +24,7 @@ If you have GitBash installed then type the following into your terminal:
 
 # Play Instructions Race Game
 - Use the arrow keys left and right to steer.
-- Use the arrow keys forward and backwards to accelerate/brake.
+- Use the arrow keys forward and backwards to accelerate and brake/reverse.
 - 1 lap and Easy is the default race settings.
 
 # Play Instructions Minigame
