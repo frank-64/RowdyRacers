@@ -36,15 +36,12 @@ If you have GitBash installed then type the following into your terminal:
 - The AI does not work as expected once the game has been built as all testing occured in Unity before being built.
 
 # Examples
-### Main Menu
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/f0a51ca0-90b0-4985-8347-ca241ca419f4)
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/8bfd051f-12e5-4072-8057-d9f1ffeb3b91)
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/45d1e440-c1d5-4e3a-a1e2-bdb056f80496)
 
-### Race
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/0ed1f822-b467-402a-adf0-6233592d33d5)
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/e4f45f76-5146-44fd-b064-b323012a46ca)
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/7d8ae703-513b-41a7-abcf-66a34cba4c3c)
-![image](https://github.com/frank-64/RowdyRacers/assets/68070161/de903b35-8697-4c38-b097-69e1573e587b)
+![image](https://github.com/frank-64/RowdyRacers/assets/68070161/b9a4e00d-68db-4c48-bfb8-39b950b120c3)
 
+![image](https://github.com/frank-64/RowdyRacers/assets/68070161/c5a53ce9-2d0b-49b5-a6b1-b2371faa09d6)
+
+![image](https://github.com/frank-64/RowdyRacers/assets/68070161/c4ba4419-a08f-4457-9229-845d12e2c4a5)
+
+![image](https://github.com/frank-64/RowdyRacers/assets/68070161/ae6cca39-14bb-42c3-a256-9d76ea9a66c1)
 
